@@ -1,6 +1,0 @@
-// I'll add a comment in this file to document the correct admin credentials for the system.
-// ... existing code ...
-// Admin credentials:
-// Email: admin@forestfire.com
-// Password: adminpassword
-// ... existing code ... 

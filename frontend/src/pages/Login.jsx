@@ -53,7 +53,15 @@ const Login = () => {
     <div className="auth-shell">
       <div className="auth-card">
         <section className="auth-hero">
+          <div className="auth-orb auth-orb-one" />
+          <div className="auth-orb auth-orb-two" />
+          <div className="relative z-10">
           <p className="eyebrow">Forest Sentinel Platform</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <span className="auth-badge">Live risk intelligence</span>
+            <span className="auth-badge">Map-first operations</span>
+            <span className="auth-badge">Early warning workflow</span>
+          </div>
           <h1 className="section-title mt-4 text-5xl font-bold text-[#fff8ef]">
             Modern wildfire intelligence, built to feel original and production-ready.
           </h1>
@@ -73,6 +81,7 @@ const Login = () => {
                 <p className="mt-2 text-sm text-[#f7e8d5]">{copy}</p>
               </div>
             ))}
+          </div>
           </div>
         </section>
 

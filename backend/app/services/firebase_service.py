@@ -1,10 +1,13 @@
-import os
 import json
 import logging
+import os
 from pathlib import Path
+from typing import Any, Dict, List
+
 import firebase_admin
 from firebase_admin import credentials, db, firestore
-from typing import Dict, Any, Optional, List
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +25,9 @@ def init_firebase():
     
     try:
         # Check for Firebase credentials
-        cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
+        cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH") or settings.FIREBASE_CREDENTIALS_PATH
         if cred_path and Path(cred_path).exists():
+            _validate_credentials_file(Path(cred_path))
             cred = credentials.Certificate(cred_path)
         else:
             # Look for credentials file in config directory
@@ -57,13 +61,20 @@ def init_firebase():
                 logger.info("Please replace with actual Firebase credentials")
                 return None, None
             
+            _validate_credentials_file(cred_file)
             cred = credentials.Certificate(str(cred_file))
         
-        # Initialize Firebase
-        firebase_app = firebase_admin.initialize_app(cred, {
-            'databaseURL': os.getenv("FIREBASE_DATABASE_URL", "https://forest-fire-prediction-default-rtdb.firebaseio.com/")
-        })
-        
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(
+                cred,
+                {
+                    "databaseURL": os.getenv(
+                        "FIREBASE_DATABASE_URL",
+                        settings.FIREBASE_DATABASE_URL,
+                    )
+                },
+            )
+
         # Get database references
         firebase_db = db.reference()
         firestore_db = firestore.client()
@@ -76,6 +87,40 @@ def init_firebase():
     except Exception as e:
         logger.error(f"Error initializing Firebase: {e}")
         return None, None
+
+
+def _validate_credentials_file(path: Path) -> None:
+    with open(path, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+
+    private_key = payload.get("private_key", "")
+    client_email = payload.get("client_email", "")
+
+    if "YOUR_PRIVATE_KEY_HERE" in private_key or "your-private-key" in private_key.lower():
+        raise ValueError(
+            f"Firebase credentials file at {path} still contains a placeholder private key. "
+            "Download a real service-account JSON from Firebase/Google Cloud and replace this file."
+        )
+
+    if not private_key.startswith("-----BEGIN PRIVATE KEY-----"):
+        raise ValueError(
+            f"Firebase credentials file at {path} does not contain a valid service-account private key."
+        )
+
+    if not client_email or "firebase-adminsdk" not in client_email:
+        raise ValueError(
+            f"Firebase credentials file at {path} does not look like a Firebase Admin SDK service account."
+        )
+
+
+def get_firestore_client():
+    _, firestore_client = init_firebase()
+    if firestore_client is None:
+        raise RuntimeError(
+            "Firebase is not initialized. Set FIREBASE_CREDENTIALS_PATH or "
+            "replace backend/app/core/config/firebase-credentials.json with a valid service account."
+        )
+    return firestore_client
 
 def update_fire_data(fire_incidents: List[Dict[str, Any]], risk_zones: List[Dict[str, Any]]) -> bool:
     """

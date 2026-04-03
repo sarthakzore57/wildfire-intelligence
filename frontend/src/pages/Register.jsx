@@ -65,13 +65,22 @@ const Register = () => {
     <div className="auth-shell">
       <div className="auth-card">
         <section className="auth-hero">
+          <div className="auth-orb auth-orb-one" />
+          <div className="auth-orb auth-orb-two" />
+          <div className="relative z-10">
           <p className="eyebrow">Create an operator account</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <span className="auth-badge">Regional watch setup</span>
+            <span className="auth-badge">Alerts and thresholds</span>
+            <span className="auth-badge">Cloud-backed profile</span>
+          </div>
           <h1 className="section-title mt-4 text-5xl font-bold text-[#fff8ef]">
             Build your own wildfire monitoring profile and start tracking risk with a sharper interface.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-[#fdebd7]">
             Set a preferred region, keep alert thresholds under control, and use the same working backend with a fully refreshed product experience.
           </p>
+          </div>
         </section>
 
         <section className="auth-form">

@@ -91,8 +91,29 @@ const Sidebar = () => {
   }, [user]);
 
   return (
-    <aside className="hidden border-r border-white/8 bg-[rgba(16,12,10,0.54)] px-4 py-5 backdrop-blur-xl lg:block">
-      <div className="space-y-5">
+    <>
+      <div className="mobile-nav panel rounded-[1.5rem] p-2 lg:hidden">
+        {navItems.map((item) => {
+          const active = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-col items-center gap-2 rounded-[1.15rem] px-2 py-3 text-center transition ${
+                active
+                  ? 'bg-gradient-to-b from-brand-500/32 to-pine-500/18 text-brand-50'
+                  : 'text-stone-300 hover:bg-white/6 hover:text-brand-50'
+              }`}
+            >
+              <span className={`rounded-2xl p-2 ${active ? 'bg-white/12' : 'bg-white/5'}`}>{item.icon}</span>
+              <span className="text-[0.68rem] font-semibold leading-4">{item.name}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      <aside className="hidden border-r border-white/8 bg-[rgba(16,12,10,0.54)] px-4 py-5 backdrop-blur-xl lg:block">
+        <div className="space-y-5">
         <div className="panel rounded-[1.8rem] p-5">
           <p className="eyebrow">Operator Snapshot</p>
           <h2 className="section-title mt-3 text-2xl font-bold text-brand-100">
@@ -162,8 +183,9 @@ const Sidebar = () => {
             )}
           </div>
         </div>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 

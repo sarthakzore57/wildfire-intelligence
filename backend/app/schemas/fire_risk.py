@@ -53,7 +53,7 @@ class FireRiskZoneUpdate(FireRiskZoneBase):
 class FireRiskZoneInDBBase(FireRiskZoneBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: str
     timestamp: datetime
 
 
@@ -62,7 +62,7 @@ class FireRiskZone(FireRiskZoneInDBBase):
 
 
 class FireIncidentBase(BaseModel):
-    risk_zone_id: int
+    risk_zone_id: str
     latitude: float
     longitude: float
     start_date: datetime
@@ -112,7 +112,7 @@ class FireIncidentCreate(FireIncidentBase):
 
 
 class FireIncidentUpdate(FireIncidentBase):
-    risk_zone_id: Optional[int] = None
+    risk_zone_id: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     start_date: Optional[datetime] = None
@@ -124,7 +124,7 @@ class FireIncidentUpdate(FireIncidentBase):
 class FireIncidentInDBBase(FireIncidentBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: str
 
 
 class FireIncident(FireIncidentInDBBase):
@@ -132,7 +132,7 @@ class FireIncident(FireIncidentInDBBase):
 
 
 class SavedRegionBase(BaseModel):
-    user_id: int
+    user_id: str
     region_name: str
     latitude: float
     longitude: float
@@ -160,7 +160,7 @@ class SavedRegionUpdate(BaseModel):
 class SavedRegionInDBBase(SavedRegionBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: str
     created_at: datetime
 
 
@@ -169,8 +169,8 @@ class SavedRegion(SavedRegionInDBBase):
 
 
 class AlertBase(BaseModel):
-    user_id: int
-    risk_zone_id: int
+    user_id: str
+    risk_zone_id: str
     risk_level: float
     message: str
     is_read: Optional[bool] = False
@@ -191,7 +191,7 @@ class AlertUpdate(BaseModel):
 class AlertInDBBase(AlertBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: str
     alert_time: datetime
 
 

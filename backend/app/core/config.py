@@ -19,14 +19,9 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
 
-    USE_SQLITE: bool = True
+    FIREBASE_CREDENTIALS_PATH: str = "app/core/config/firebase-credentials.json"
+    FIREBASE_DATABASE_URL: str = "https://forest-fire-prediction-default-rtdb.firebaseio.com/"
     SQLITE_DB_PATH: str = "app.db"
-
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "forest_fire_db"
-    POSTGRES_PORT: str = "5432"
 
     INFLUXDB_URL: str = "http://localhost:8086"
     INFLUXDB_TOKEN: str = "my-token"
@@ -71,13 +66,6 @@ class Settings(BaseSettings):
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        if self.USE_SQLITE:
-            return f"sqlite:///{self.SQLITE_DB_PATH}"
-
-        return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
-
+        return f"sqlite:///{self.SQLITE_DB_PATH}"
 
 settings = Settings()

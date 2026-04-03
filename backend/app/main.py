@@ -1,19 +1,15 @@
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
-from app.db.session import engine, Base
-from app.api import deps
+from app.services.firebase_service import init_firebase
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+init_firebase()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -57,11 +53,10 @@ def root():
 
 # Health check endpoint
 @app.get("/health")
-def health_check(db: Session = Depends(deps.get_db)):
+def health_check():
     try:
-        # Try to execute a simple query to check DB connection
-        db.execute(text("SELECT 1"))
-        db_status = "healthy"
+        _, firestore_db = init_firebase()
+        db_status = "healthy" if firestore_db is not None else "unhealthy"
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
     

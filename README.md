@@ -6,6 +6,35 @@ An AI-powered web application that predicts forest fire occurrences using real-t
 
 This system analyzes weather conditions, vegetation dryness, and historical fire data to predict high-risk areas, helping governments, firefighters, and environmental organizations respond more effectively to potential fire outbreaks.
 
+## Problem Statement
+
+The Forest Fire Prediction System is designed to leverage real-time environmental data, satellite imagery, and historical fire records to identify fire-prone regions at an early stage. The proposed platform combines predictive analytics with a cloud-based application architecture to support more accurate fire-risk monitoring and earlier warning generation. By bringing together meteorological parameters, remote-sensing indicators, and historical incident patterns, the system aims to help operators monitor wildfire conditions through a single digital interface.
+
+## Work Completed Till Date
+
+- Built the frontend application using React and Vite with dedicated pages for login, registration, dashboard, alerts, profile, historical data, and fire-risk visualization.
+- Implemented the backend API using FastAPI with structured routes for authentication, users, fire-risk zones, fire incidents, alerts, and prediction workflows.
+- Integrated Firebase-based storage for core application data, including user records, fire-risk zones, incidents, saved regions, and alerts.
+- Added authentication flow for operator account creation, login, protected routes, and current-user access.
+- Implemented fire-risk management flows, including viewing zones, viewing incidents, saving monitored regions, and managing alerts.
+- Added prediction endpoints that simulate fire-risk scoring and fire-spread forecasting to validate the end-to-end application flow.
+- Connected the frontend to backend APIs so that the interface can consume authentication, risk, incident, and alert data from the server.
+- Cleaned the project structure by removing unused Docker, duplicate, debug, and stray test files from the repository.
+- Updated project documentation for the current local setup and Firebase-based backend configuration.
+
+## Current Status
+
+The project currently has a working full-stack structure with a usable interface, backend service layer, API integration, and Firebase connectivity. The present prediction workflow is a prototype implementation that demonstrates the expected system behavior and data flow, but it is not yet a finalized machine learning model trained on production wildfire datasets.
+
+## Remaining Work
+
+- Enable and finalize Google Cloud Firestore in the Firebase project for persistent production use.
+- Replace prototype prediction logic with trained machine learning models for real fire-risk estimation.
+- Complete ingestion and preprocessing pipelines for live meteorological and satellite data sources.
+- Migrate or refactor older SQL-oriented utility scripts so they align fully with the Firebase-based backend.
+- Add stronger validation, better operator-facing error messages, and production-ready alert delivery workflows.
+- Improve testing coverage for backend APIs, data services, and frontend user flows.
+
 ### Target Audience
 
 - Government Agencies: For disaster preparedness and resource allocation
@@ -47,8 +76,7 @@ Profile Page:
 
 ### Backend
 - FastAPI with Python
-- SQLite for local development
-- PostgreSQL for containerized deployments
+- Firebase Firestore for primary application data
 - InfluxDB for time-series data
 
 ### AI/ML
@@ -65,16 +93,18 @@ Profile Page:
 ### Prerequisites
 - Python 3.12 recommended
 - Node.js 22 recommended
-- Docker and Docker Compose
-- PostgreSQL (only required for Docker mode)
 - InfluxDB (optional in local mode)
+- Firebase service-account credentials JSON
 
 ### Quickstart
-To run the project locally without Docker:
+To run the project locally:
 
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
+
+# add your Firebase service account JSON here:
+# backend/app/core/config/firebase-credentials.json
 
 # backend
 cd backend
@@ -104,34 +134,13 @@ Open:
 6. Set up environment variables (copy `.env.example` to `.env` and fill in values)
 7. Run the development server: `python -m uvicorn app.main:app --reload`
 
-The default local setup uses SQLite, so PostgreSQL is not required unless you switch `USE_SQLITE=False`.
+The backend now uses Firebase/Firestore as its primary database, so make sure `backend/.env` points to a valid Firebase credentials JSON file.
 
 ### Frontend Setup
 1. Navigate to the frontend directory: `cd frontend`
 2. Install dependencies: `npm install`
 3. Set up environment variables (copy `.env.example` to `.env` and fill in values)
 4. Run the development server: `npm run dev`
-
-### Docker Setup
-1. Make sure Docker and Docker Compose are installed
-2. Copy the example env files:
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-3. Build and start the containers:
-
-```bash
-docker compose up --build
-```
-
-Docker runs:
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
-- PostgreSQL: `localhost:5432`
-- InfluxDB: `localhost:8086`
 
 ## Data Integration
 
@@ -172,16 +181,6 @@ NOAA_API_KEY=your_api_key_here
 Once the backend is running, API documentation is available at:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
-
-## Deployment
-
-This application can be deployed using Docker containers to various cloud platforms:
-- AWS
-- Google Cloud Platform
-- Heroku
-- Firebase
-
-Detailed deployment instructions are available in the `deployment` directory.
 
 ## Contributing
 

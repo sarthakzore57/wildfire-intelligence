@@ -47,7 +47,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/8 bg-[rgba(20,15,13,0.78)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-5 px-4 py-4 md:px-6">
+      <div className="shell-container flex flex-wrap items-center justify-between gap-5 px-4 py-4 md:px-6">
         <div className="min-w-0">
           <Link to="/" className="inline-flex items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-pine-500 text-[#fff8ef] shadow-lg shadow-brand-900/25">
@@ -68,6 +68,11 @@ const Header = () => {
             <span className="eyebrow !text-[0.62rem] !tracking-[0.18em]">{currentPage.label}</span>
             <span className="status-dot bg-pine-400 shadow-[0_0_12px_rgba(72,186,130,0.85)]" />
             <span className="text-stone-200">Backend healthy</span>
+          </div>
+
+          <div className="panel-soft hidden rounded-full px-4 py-2 text-sm text-stone-200 xl:flex xl:items-center xl:gap-3">
+            <span className="eyebrow !text-[0.62rem] !tracking-[0.18em]">Monitoring</span>
+            <span>{user?.region_name || 'No primary region set'}</span>
           </div>
 
           <div className="panel-soft flex items-center gap-3 rounded-full px-3 py-2">

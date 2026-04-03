@@ -1,196 +1,138 @@
-from typing import Optional, List
+from __future__ import annotations
+
 import logging
+from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-
-from app import models, schemas
+from app import schemas
 from app.core.security import get_password_hash, verify_password
+from app.services.firebase_service import get_firestore_client
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-def get_user(db: Session, user_id: int) -> Optional[models.User]:
-    """
-    Get a user by ID
-    """
-    return db.query(models.User).filter(models.User.id == user_id).first()
+USERS_COLLECTION = "users"
 
 
-def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
-    """
-    Get a user by email
-    """
-    return db.query(models.User).filter(models.User.email == email).first()
+def _normalize_user(doc_id: str, data: dict) -> dict:
+    payload = {"id": doc_id, **data}
+    payload.setdefault("created_at", datetime.utcnow())
+    payload.setdefault("is_active", True)
+    payload.setdefault("is_superuser", False)
+    payload.setdefault("alert_threshold", 0.7)
+    payload.setdefault("email_alerts", True)
+    payload.setdefault("sms_alerts", False)
+    return payload
 
 
-def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
-    """
-    Get a user by username
-    """
-    return db.query(models.User).filter(models.User.username == username).first()
-
-
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> list[models.User]:
-    """
-    Get multiple users with pagination
-    """
-    return db.query(models.User).offset(skip).limit(limit).all()
-
-
-def create_user(db: Session, user_in: schemas.UserCreate) -> Optional[models.User]:
-    """
-    Create a new user with improved error handling
-    """
-    try:
-        # Check if a user with this email already exists
-        existing_user = get_user_by_email(db, email=user_in.email)
-        if existing_user:
-            logger.warning(f"Attempted to create user with existing email: {user_in.email}")
-            return None
-        
-        # Check if a user with this username already exists
-        existing_username = get_user_by_username(db, username=user_in.username)
-        if existing_username:
-            logger.warning(f"Attempted to create user with existing username: {user_in.username}")
-            return None
-            
-        # Create user object with all fields
-        db_user = models.User(
-            email=user_in.email,
-            username=user_in.username,
-            hashed_password=get_password_hash(user_in.password),
-            is_active=True,
-            is_superuser=False,
-            latitude=user_in.latitude,
-            longitude=user_in.longitude,
-            region_name=user_in.region_name,
-            alert_threshold=user_in.alert_threshold,
-            email_alerts=user_in.email_alerts,
-            sms_alerts=user_in.sms_alerts,
-            phone_number=user_in.phone_number,
-        )
-        
-        # Add to database
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        
-        logger.info(f"User created successfully: {user_in.username}")
-        return db_user
-        
-    except IntegrityError as e:
-        db.rollback()
-        logger.error(f"IntegrityError creating user: {e}")
+def get_user(user_id: str) -> Optional[dict]:
+    firestore_db = get_firestore_client()
+    snapshot = firestore_db.collection(USERS_COLLECTION).document(user_id).get()
+    if not snapshot.exists:
         return None
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"SQLAlchemyError creating user: {e}")
-        return None
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Unexpected error creating user: {e}")
+    return _normalize_user(snapshot.id, snapshot.to_dict())
+
+
+def get_user_by_email(email: str) -> Optional[dict]:
+    firestore_db = get_firestore_client()
+    docs = (
+        firestore_db.collection(USERS_COLLECTION)
+        .where("email", "==", email)
+        .limit(1)
+        .stream()
+    )
+    for doc in docs:
+        return _normalize_user(doc.id, doc.to_dict())
+    return None
+
+
+def get_user_by_username(username: str) -> Optional[dict]:
+    firestore_db = get_firestore_client()
+    docs = (
+        firestore_db.collection(USERS_COLLECTION)
+        .where("username", "==", username)
+        .limit(1)
+        .stream()
+    )
+    for doc in docs:
+        return _normalize_user(doc.id, doc.to_dict())
+    return None
+
+
+def get_users(skip: int = 0, limit: int = 100) -> list[dict]:
+    firestore_db = get_firestore_client()
+    docs = firestore_db.collection(USERS_COLLECTION).stream()
+    users = [_normalize_user(doc.id, doc.to_dict()) for doc in docs]
+    users.sort(key=lambda user: user.get("created_at") or datetime.min)
+    return users[skip : skip + limit]
+
+
+def create_user(user_in: schemas.UserCreate) -> Optional[dict]:
+    if get_user_by_email(user_in.email) or get_user_by_username(user_in.username):
         return None
 
+    firestore_db = get_firestore_client()
+    user_data = {
+        "email": user_in.email,
+        "username": user_in.username,
+        "hashed_password": get_password_hash(user_in.password),
+        "is_active": True,
+        "is_superuser": False,
+        "created_at": datetime.utcnow(),
+        "latitude": user_in.latitude,
+        "longitude": user_in.longitude,
+        "region_name": user_in.region_name,
+        "alert_threshold": user_in.alert_threshold,
+        "email_alerts": user_in.email_alerts,
+        "sms_alerts": user_in.sms_alerts,
+        "phone_number": user_in.phone_number,
+    }
+    ref = firestore_db.collection(USERS_COLLECTION).document()
+    ref.set(user_data)
+    logger.info("Created Firebase user %s", user_in.email)
+    return _normalize_user(ref.id, user_data)
 
-def update_user(
-    db: Session, user_id: int, user_in: schemas.UserUpdate
-) -> Optional[models.User]:
-    """
-    Update a user
-    """
-    try:
-        db_user = get_user(db, user_id)
-        if not db_user:
-            return None
-        
-        # Convert Pydantic model to dict, excluding unset fields
-        update_data = user_in.model_dump(exclude_unset=True)
-        
-        # Handle password update separately
-        if "password" in update_data and update_data["password"]:
-            hashed_password = get_password_hash(update_data["password"])
-            update_data["hashed_password"] = hashed_password
-            del update_data["password"]
-        
-        # Update user model with the new data
-        for field, value in update_data.items():
-            setattr(db_user, field, value)
-        
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        
-        logger.info(f"User updated successfully: {db_user.username}")
-        return db_user
-        
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"SQLAlchemyError updating user: {e}")
-        return None
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Unexpected error updating user: {e}")
+
+def update_user(user_id: str, user_in: schemas.UserUpdate) -> Optional[dict]:
+    existing = get_user(user_id)
+    if not existing:
         return None
 
+    update_data = user_in.model_dump(exclude_unset=True)
+    if "password" in update_data and update_data["password"]:
+        update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+    elif "password" in update_data:
+        update_data.pop("password")
 
-def delete_user(db: Session, user_id: int) -> bool:
-    """
-    Delete a user
-    """
-    try:
-        db_user = get_user(db, user_id)
-        if not db_user:
-            return False
-            
-        db.delete(db_user)
-        db.commit()
-        
-        logger.info(f"User deleted successfully: ID {user_id}")
-        return True
-        
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"SQLAlchemyError deleting user: {e}")
-        return False
-    except Exception as e:
-        db.rollback()
-        logger.error(f"Unexpected error deleting user: {e}")
+    firestore_db = get_firestore_client()
+    firestore_db.collection(USERS_COLLECTION).document(user_id).update(update_data)
+    existing.update(update_data)
+    return existing
+
+
+def delete_user(user_id: str) -> bool:
+    existing = get_user(user_id)
+    if not existing:
         return False
 
+    firestore_db = get_firestore_client()
+    firestore_db.collection(USERS_COLLECTION).document(user_id).delete()
+    return True
 
-def authenticate(db: Session, email: str, password: str) -> Optional[models.User]:
-    """
-    Authenticate a user
-    """
-    try:
-        user = get_user_by_email(db, email=email)
-        if not user:
-            logger.warning(f"Authentication failed: no user with email {email}")
-            return None
-            
-        if not verify_password(password, user.hashed_password):
-            logger.warning(f"Authentication failed: invalid password for {email}")
-            return None
-            
-        logger.info(f"User authenticated successfully: {email}")
-        return user
-        
-    except Exception as e:
-        logger.error(f"Error during authentication: {e}")
+
+def authenticate(email: str, password: str) -> Optional[dict]:
+    user = get_user_by_email(email)
+    if not user:
         return None
+    hashed_password = user.get("hashed_password")
+    if not hashed_password or not verify_password(password, hashed_password):
+        return None
+    return user
 
 
-def check_db_connection(db: Session) -> bool:
-    """
-    Check if the database connection is working properly
-    Returns True if connection is OK, False otherwise
-    """
+def check_db_connection() -> bool:
     try:
-        # Execute a simple query to check connection
-        db.execute(text("SELECT 1"))
+        list(get_firestore_client().collections())
         return True
-    except Exception as e:
-        logger.error(f"Database connection error: {e}")
-        return False 
+    except Exception as exc:
+        logger.error("Firebase connection error: %s", exc)
+        return False

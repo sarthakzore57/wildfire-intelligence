@@ -83,9 +83,11 @@ function App() {
   const AppLayout = ({ children }) => (
     <div className="app-shell">
       <Header />
-      <div className="app-grid">
+      <div className="shell-container app-grid">
         <Sidebar />
-        <main className="min-w-0 px-4 py-4 md:px-6 md:py-6">{children}</main>
+        <main className="min-w-0 px-4 py-4 md:px-6 md:py-6">
+          <div className="content-stack">{children}</div>
+        </main>
       </div>
     </div>
   );

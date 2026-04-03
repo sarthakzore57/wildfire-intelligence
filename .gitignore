@@ -32,6 +32,10 @@ ENV/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/app/core/config/firebase-credentials.json
+backend/app/core/config/*service-account*.json
+backend/app/core/config/*firebase*.json
+backend/app/core/config/*rtdb-export*.json
 
 # IDE specific files
 .idea/
