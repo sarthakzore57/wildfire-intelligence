@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
-from typing import Any
 import random
+from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app import schemas
 from app.api import deps
-from app.services import fire_risk_service
+from app.services import fire_risk_service, global_risk_service
 
 router = APIRouter()
 
@@ -16,6 +16,19 @@ class FireRiskPredictionRequest(BaseModel):
     latitude: float
     longitude: float
     region_name: str | None = None
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_latitude(cls, value: float) -> float:
+        if not -90 <= value <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return value
+
+    @field_validator("longitude")
+    @classmethod
+    def normalize_longitude(cls, value: float) -> float:
+        normalized = ((value + 180) % 360) - 180
+        return 180.0 if normalized == -180 and value > 0 else normalized
 
 
 @router.post("/fire-risk/zones", response_model=schemas.FireRiskZone)
@@ -30,37 +43,36 @@ def predict_fire_risk_zone(
     if existing_zone and existing_zone["timestamp"] > datetime.utcnow() - timedelta(hours=1):
         return schemas.FireRiskZone.model_validate(existing_zone)
 
-    risk_level = random.uniform(0, 1)
-    risk_category = "Low"
-    if risk_level > 0.7:
-        risk_category = "High"
-    elif risk_level > 0.4:
-        risk_category = "Medium"
-
-    fire_risk_in = schemas.FireRiskZoneCreate(
-        region_name=request.region_name or f"Region near {request.latitude:.2f}, {request.longitude:.2f}",
+    prediction_payload = global_risk_service.build_global_risk_zone_payload(
         latitude=request.latitude,
         longitude=request.longitude,
-        risk_level=risk_level,
-        risk_category=risk_category,
-        temperature=random.uniform(15, 35),
-        humidity=random.uniform(20, 80),
-        wind_speed=random.uniform(0, 25),
-        precipitation=random.uniform(0, 10),
-        vegetation_density=random.uniform(0, 1),
-        vegetation_type=random.choice(["Forest", "Grassland", "Shrubland", "Mixed"]),
-        soil_moisture=random.uniform(0, 1),
-        prediction_model="DemoRandomModel",
-        confidence_score=random.uniform(0.7, 0.99),
+        region_name=request.region_name,
+    )
+
+    fire_risk_in = schemas.FireRiskZoneCreate(
+        region_name=prediction_payload["region_name"],
+        latitude=prediction_payload["latitude"],
+        longitude=prediction_payload["longitude"],
+        risk_level=prediction_payload["risk_level"],
+        risk_category=prediction_payload["risk_category"],
+        temperature=prediction_payload["temperature"],
+        humidity=prediction_payload["humidity"],
+        wind_speed=prediction_payload["wind_speed"],
+        precipitation=prediction_payload["precipitation"],
+        vegetation_density=prediction_payload["vegetation_density"],
+        vegetation_type=prediction_payload["vegetation_type"],
+        soil_moisture=prediction_payload["soil_moisture"],
+        prediction_model=prediction_payload["prediction_model"],
+        confidence_score=prediction_payload["confidence_score"],
     )
     zone = fire_risk_service.create_fire_risk_zone(fire_risk_in=fire_risk_in)
 
-    if current_user.alert_threshold and risk_level >= current_user.alert_threshold:
+    if current_user.alert_threshold and zone["risk_level"] >= current_user.alert_threshold:
         fire_risk_service.create_alert(
             user_id=current_user.id,
             risk_zone_id=zone["id"],
-            risk_level=risk_level,
-            message=f"High fire risk detected in {zone['region_name']}. Risk level: {risk_level:.2f}",
+            risk_level=zone["risk_level"],
+            message=f"High fire risk detected in {zone['region_name']}. Risk level: {zone['risk_level']:.2f}",
         )
 
     return schemas.FireRiskZone.model_validate(zone)
@@ -69,6 +81,13 @@ def predict_fire_risk_zone(
 class FireSpreadRequest(BaseModel):
     zone_id: str
     hours_ahead: int = 24
+
+    @field_validator("hours_ahead")
+    @classmethod
+    def validate_hours_ahead(cls, value: int) -> int:
+        if not 1 <= value <= 48:
+            raise ValueError("hours_ahead must be between 1 and 48")
+        return value
 
 
 @router.post("/fire-spread", response_model=dict)
@@ -84,38 +103,48 @@ def predict_fire_spread(
             detail=f"Fire risk zone with ID {request.zone_id} not found",
         )
 
-    lat, lng = zone["latitude"], zone["longitude"]
+    lat = float(zone["latitude"])
+    lng = ((float(zone["longitude"]) + 180) % 360) - 180
     spread_points = []
     current_time = datetime.utcnow()
-    wind_factor = zone.get("wind_speed", 1) / 10 if zone.get("wind_speed") else 0.1
+    wind_speed = float(zone.get("wind_speed") or 0.0)
     wind_direction = random.uniform(0, 360)
-    risk_factor = zone["risk_level"] * 2
+    risk_level = float(zone["risk_level"])
+    base_distance_km = min(1.8, 0.08 + (wind_speed * 0.025) + (risk_level * 0.65))
 
     for hour in range(1, request.hours_ahead + 1):
         import math
 
         angle_rad = math.radians(wind_direction)
-        distance = wind_factor * risk_factor * 0.01
-        lat += distance * math.cos(angle_rad) + random.uniform(-0.005, 0.005)
-        lng += distance * math.sin(angle_rad) + random.uniform(-0.005, 0.005)
+        hour_distance_km = base_distance_km * (0.92 ** (hour - 1))
+        direction_noise_deg = random.uniform(-12, 12)
+        noisy_angle = math.radians(wind_direction + direction_noise_deg)
+        delta_north_km = (hour_distance_km * math.cos(noisy_angle)) + random.uniform(-0.12, 0.12)
+        delta_east_km = (hour_distance_km * math.sin(noisy_angle)) + random.uniform(-0.12, 0.12)
+
+        lat += delta_north_km / 111.0
+        lng += delta_east_km / max(1e-6, 111.0 * math.cos(math.radians(lat)))
+        lng = ((lng + 180) % 360) - 180
+        lat = max(-90.0, min(90.0, lat))
+
         spread_points.append(
             {
                 "latitude": lat,
                 "longitude": lng,
                 "timestamp": (current_time + timedelta(hours=hour)).isoformat(),
-                "risk_level": min(1.0, zone["risk_level"] + (hour * 0.01)),
+                "risk_level": max(0.15, min(1.0, risk_level - (hour * 0.012) + random.uniform(-0.015, 0.015))),
             }
         )
 
     return {
         "original_zone": {
             "id": zone["id"],
-            "latitude": zone["latitude"],
-            "longitude": zone["longitude"],
-            "risk_level": zone["risk_level"],
+            "latitude": float(zone["latitude"]),
+            "longitude": ((float(zone["longitude"]) + 180) % 360) - 180,
+            "risk_level": risk_level,
             "risk_category": zone["risk_category"],
         },
         "spread_points": spread_points,
-        "max_spread_distance_km": wind_factor * risk_factor * request.hours_ahead,
+        "max_spread_distance_km": sum(base_distance_km * (0.92 ** (hour - 1)) for hour in range(1, request.hours_ahead + 1)),
         "wind_direction_degrees": wind_direction,
     }

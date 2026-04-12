@@ -4,29 +4,29 @@ import { AuthContext } from '../../context/AuthContext';
 
 const pageCopy = {
   '/': {
-    label: 'Operational View',
+    label: 'Overview',
     title: 'Wildfire command center',
-    summary: 'Track live risk, active incidents, and user-facing alerts from one modern surface.',
+    summary: 'Track current risk, active incidents, and alerts from one place.',
   },
   '/map': {
-    label: 'Geospatial View',
+    label: 'Map',
     title: 'Risk mapping and spread simulation',
-    summary: 'Inspect zones, generate fresh predictions, and build a watchlist directly from the map.',
+    summary: 'Inspect estimated risk, simulate spread, and manage your watchlist.',
   },
   '/historical': {
-    label: 'Historical View',
+    label: 'History',
     title: 'Incident history and trend analysis',
-    summary: 'Review patterns, severity distribution, and historical timing for incident planning.',
+    summary: 'Review recent incidents, severity mix, and historical timing.',
   },
   '/alerts': {
-    label: 'Notification View',
+    label: 'Alerts',
     title: 'Alert feed and action queue',
-    summary: 'Triage unread risk notifications and keep critical updates from being missed.',
+    summary: 'Review unread notifications and keep the queue clear.',
   },
   '/profile': {
-    label: 'Operator Settings',
+    label: 'Profile',
     title: 'Profile, thresholds, and response preferences',
-    summary: 'Keep account details and alert channels aligned with how you want to monitor regions.',
+    summary: 'Update account details, thresholds, and alert channels.',
   },
 };
 

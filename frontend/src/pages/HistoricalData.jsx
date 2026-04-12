@@ -103,6 +103,19 @@ const HistoricalData = () => {
     return { totalArea, active, highSeverity };
   }, [incidents]);
 
+  const hasActiveFilters = Boolean(
+    filters.status || filters.severity || filters.startDateFrom || filters.startDateTo
+  );
+
+  const clearFilters = () => {
+    setFilters({
+      status: '',
+      severity: '',
+      startDateFrom: '',
+      startDateTo: '',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <section className="hero-card rounded-[2rem] px-6 py-7 md:px-8">
@@ -137,6 +150,11 @@ const HistoricalData = () => {
             <p className="eyebrow">Filters</p>
             <h2 className="section-title mt-2 text-2xl font-bold text-brand-100">Shape the timeline</h2>
           </div>
+          {hasActiveFilters ? (
+            <button type="button" onClick={clearFilters} className="secondary-button">
+              Clear filters
+            </button>
+          ) : null}
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -196,17 +214,23 @@ const HistoricalData = () => {
               <p className="eyebrow">Severity breakdown</p>
               <h3 className="section-title mt-2 text-2xl font-bold text-brand-100">Incidents by severity</h3>
               <div className="mt-5 h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={severityData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={42}>
-                      {severityData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {incidents.length ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={severityData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={42}>
+                        {severityData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="grid h-full place-items-center rounded-[1.4rem] border border-white/8 bg-white/3 text-center text-sm text-stone-400">
+                    <p>No incidents match the current filters.</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -214,17 +238,23 @@ const HistoricalData = () => {
               <p className="eyebrow">Status breakdown</p>
               <h3 className="section-title mt-2 text-2xl font-bold text-brand-100">Incidents by status</h3>
               <div className="mt-5 h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={42}>
-                      {statusData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {incidents.length ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={90} innerRadius={42}>
+                        {statusData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="grid h-full place-items-center rounded-[1.4rem] border border-white/8 bg-white/3 text-center text-sm text-stone-400">
+                    <p>No incidents match the current filters.</p>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -233,18 +263,24 @@ const HistoricalData = () => {
             <p className="eyebrow">Timeline</p>
             <h3 className="section-title mt-2 text-2xl font-bold text-brand-100">Monthly incident flow</h3>
             <div className="mt-5 h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="month" stroke="rgba(248,240,228,0.6)" />
-                  <YAxis stroke="rgba(248,240,228,0.6)" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="High" stackId="a" fill={severityColors.High} />
-                  <Bar dataKey="Medium" stackId="a" fill={severityColors.Medium} />
-                  <Bar dataKey="Low" stackId="a" fill={severityColors.Low} />
-                </BarChart>
-              </ResponsiveContainer>
+              {monthlyData.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="month" stroke="rgba(248,240,228,0.6)" />
+                    <YAxis stroke="rgba(248,240,228,0.6)" />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="High" stackId="a" fill={severityColors.High} />
+                    <Bar dataKey="Medium" stackId="a" fill={severityColors.Medium} />
+                    <Bar dataKey="Low" stackId="a" fill={severityColors.Low} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="grid h-full place-items-center rounded-[1.4rem] border border-white/8 bg-white/3 text-center text-sm text-stone-400">
+                  <p>No timeline data is available for the current filters.</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -258,36 +294,42 @@ const HistoricalData = () => {
             </div>
 
             <div className="mt-5 overflow-x-auto">
-              <table className="data-table min-w-full">
-                <thead>
-                  <tr>
-                    <th>Coordinates</th>
-                    <th>Status</th>
-                    <th>Severity</th>
-                    <th>Start</th>
-                    <th>Area</th>
-                    <th>Source</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {incidents.map((incident) => (
-                    <tr key={incident.id}>
-                      <td className="text-sm text-brand-50">
-                        {Number(incident.latitude).toFixed(3)}, {Number(incident.longitude).toFixed(3)}
-                      </td>
-                      <td className="text-sm text-stone-300">{incident.status}</td>
-                      <td className="text-sm font-semibold" style={{ color: severityColors[incident.severity] || '#f8f0e4' }}>
-                        {incident.severity}
-                      </td>
-                      <td className="text-sm text-stone-300">{format(new Date(incident.start_date), 'MMM d, yyyy')}</td>
-                      <td className="text-sm text-stone-300">
-                        {incident.area_affected ? `${Number(incident.area_affected).toFixed(1)} km²` : 'N/A'}
-                      </td>
-                      <td className="text-sm text-stone-300">{incident.source}</td>
+              {incidents.length ? (
+                <table className="data-table min-w-full">
+                  <thead>
+                    <tr>
+                      <th>Coordinates</th>
+                      <th>Status</th>
+                      <th>Severity</th>
+                      <th>Start</th>
+                      <th>Area</th>
+                      <th>Source</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {incidents.map((incident) => (
+                      <tr key={incident.id}>
+                        <td className="text-sm text-brand-50">
+                          {Number(incident.latitude).toFixed(3)}, {Number(incident.longitude).toFixed(3)}
+                        </td>
+                        <td className="text-sm text-stone-300">{incident.status}</td>
+                        <td className="text-sm font-semibold" style={{ color: severityColors[incident.severity] || '#f8f0e4' }}>
+                          {incident.severity}
+                        </td>
+                        <td className="text-sm text-stone-300">{format(new Date(incident.start_date), 'MMM d, yyyy')}</td>
+                        <td className="text-sm text-stone-300">
+                          {incident.area_affected ? `${Number(incident.area_affected).toFixed(1)} km^2` : 'N/A'}
+                        </td>
+                        <td className="text-sm text-stone-300">{incident.source}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="rounded-[1.4rem] border border-white/8 bg-white/3 p-5 text-sm text-stone-400">
+                  No incident records match the current filters.
+                </div>
+              )}
             </div>
           </section>
         </>

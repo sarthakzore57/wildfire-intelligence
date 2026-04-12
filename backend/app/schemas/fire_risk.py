@@ -35,6 +35,19 @@ class FireRiskZoneBase(BaseModel):
             raise ValueError(f'Risk category must be one of: {", ".join(sorted(valid_categories))}')
         return value
 
+    @field_validator("latitude")
+    @classmethod
+    def validate_latitude(cls, value: float) -> float:
+        if not -90 <= value <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return value
+
+    @field_validator("longitude")
+    @classmethod
+    def normalize_longitude(cls, value: float) -> float:
+        normalized = ((value + 180) % 360) - 180
+        return 180.0 if normalized == -180 and value > 0 else normalized
+
 
 class FireRiskZoneCreate(FireRiskZoneBase):
     pass
@@ -106,6 +119,19 @@ class FireIncidentBase(BaseModel):
             raise ValueError(f'Source must be one of: {", ".join(sorted(valid_sources))}')
         return value
 
+    @field_validator("latitude")
+    @classmethod
+    def validate_incident_latitude(cls, value: float) -> float:
+        if not -90 <= value <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return value
+
+    @field_validator("longitude")
+    @classmethod
+    def normalize_incident_longitude(cls, value: float) -> float:
+        normalized = ((value + 180) % 360) - 180
+        return 180.0 if normalized == -180 and value > 0 else normalized
+
 
 class FireIncidentCreate(FireIncidentBase):
     pass
@@ -144,6 +170,19 @@ class SavedRegionBase(BaseModel):
         if value is not None and not 0 <= value <= 1:
             raise ValueError("Threshold must be between 0 and 1")
         return value
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_saved_region_latitude(cls, value: float) -> float:
+        if not -90 <= value <= 90:
+            raise ValueError("Latitude must be between -90 and 90")
+        return value
+
+    @field_validator("longitude")
+    @classmethod
+    def normalize_saved_region_longitude(cls, value: float) -> float:
+        normalized = ((value + 180) % 360) - 180
+        return 180.0 if normalized == -180 and value > 0 else normalized
 
 
 class SavedRegionCreate(SavedRegionBase):

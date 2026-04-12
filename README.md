@@ -152,6 +152,7 @@ The system includes scripts for importing and processing fire data:
 - `scripts/init_db.py`: Initializes the database with required tables
 - `scripts/import_historical_fire_data.py`: Imports historical fire data from USFS and NASA FIRMS
 - `scripts/realtime_fire_data.py`: Fetches real-time fire data from NASA FIRMS, NIFC, and NOAA
+- `scripts/retrain_global_model.py`: Rebuilds and retrains the global prediction model with versioned artifacts
 
 ### Running Data Scripts
 
@@ -163,9 +164,10 @@ cd backend
 .venv312\Scripts\python scripts/init_db.py
 .venv312\Scripts\python scripts/import_historical_fire_data.py
 .venv312\Scripts\python scripts/realtime_fire_data.py
+.venv312\Scripts\python scripts/retrain_global_model.py --dataset-source live --samples 1000
 ```
 
-For automatic updates, set up a cron job (Linux/macOS) or Task Scheduler (Windows) to run `realtime_fire_data.py` periodically.
+For automatic updates, set up a cron job (Linux/macOS) or Task Scheduler (Windows) to run `realtime_fire_data.py` and `retrain_global_model.py` periodically.
 
 ### API Keys
 

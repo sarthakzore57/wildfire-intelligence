@@ -61,6 +61,11 @@ logs/
 *.log
 npm-debug.log*
 
+# Training artifacts
+backend/training/data/*.csv
+backend/app/models/trained/*.joblib
+backend/app/models/trained/*.json
+
 # Frontend
 node_modules/
 coverage/

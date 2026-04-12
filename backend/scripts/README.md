@@ -44,9 +44,25 @@ Runs all the scripts in sequence to set up the entire system with one command.
 python run_all.py
 ```
 
+### retrain_global_model.py
+Collects a dataset and retrains the global prediction model with versioned artifacts and registry update.
+
+```bash
+python retrain_global_model.py --dataset-source live --samples 1000
+```
+
+Historical real-data example:
+
+```bash
+python retrain_global_model.py --dataset-source historical --start-date 2025-01-01 --end-date 2025-12-31 --event-limit 200
+```
+
 ## Setting Up Scheduled Jobs
 
-To keep the system updated with real-time data, you can schedule the `realtime_fire_data.py` script to run at regular intervals.
+To keep the system updated with real-time data and model quality, schedule both:
+
+- `realtime_fire_data.py` for incident/risk feeds
+- `retrain_global_model.py` for periodic model refresh
 
 ### Using Cron (Linux/macOS)
 
@@ -60,6 +76,11 @@ Add a line to run the script every hour:
 0 * * * * cd /path/to/project/backend && python scripts/realtime_fire_data.py >> /path/to/project/backend/scripts/logs/realtime_cron.log 2>&1
 ```
 
+Add a weekly retraining job (example every Sunday at 02:00):
+```
+0 2 * * 0 cd /path/to/project/backend && python scripts/retrain_global_model.py --dataset-source live --samples 2000 >> /path/to/project/backend/scripts/logs/retrain_cron.log 2>&1
+```
+
 ### Using Task Scheduler (Windows)
 
 1. Open Task Scheduler
@@ -67,6 +88,7 @@ Add a line to run the script every hour:
 3. Set the trigger to run daily or hourly as needed
 4. Add an action to start a program: `python` with arguments: `scripts/realtime_fire_data.py`
 5. Set the start in directory: `C:\path\to\project\backend`
+6. Add a second task for retraining with arguments: `scripts/retrain_global_model.py --dataset-source live --samples 2000`
 
 ## Data Sources
 
@@ -111,3 +133,10 @@ To update only the real-time data:
 cd /path/to/project/backend
 python scripts/realtime_fire_data.py
 ``` 
+
+To retrain the global model:
+
+```bash
+cd /path/to/project/backend
+python scripts/retrain_global_model.py --dataset-source live --samples 1000
+```

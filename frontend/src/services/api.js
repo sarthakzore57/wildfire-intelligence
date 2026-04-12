@@ -1,10 +1,23 @@
 import axios from 'axios';
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const defaultApiBaseUrl = (() => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  if (typeof window !== 'undefined') {
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    return isLocalhost
+      ? 'http://localhost:8000/api/v1'
+      : `${window.location.origin}/_/backend/api/v1`;
+  }
+
+  return 'http://localhost:8000/api/v1';
+})();
 
 // Create an axios instance with base URL
 const api = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: defaultApiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

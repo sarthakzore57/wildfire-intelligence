@@ -70,9 +70,9 @@ const FireRiskMapPage = () => {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Geospatial control room</p>
-            <h1 className="section-title mt-2 text-3xl font-bold text-brand-100">Risk map and live prediction</h1>
+            <h1 className="section-title mt-2 text-3xl font-bold text-brand-100">Risk map and live estimates</h1>
             <p className="mt-2 max-w-2xl text-sm text-stone-300">
-              Click anywhere on the map to generate a fresh fire-risk estimate, then simulate spread and save the region.
+              Click on the map to generate an estimated risk score, simulate spread, and save the region.
             </p>
           </div>
           <div className="panel-soft rounded-full px-4 py-2 text-sm text-stone-200">
@@ -131,14 +131,14 @@ const FireRiskMapPage = () => {
               {feedback ? <p className="mt-3 text-sm text-brand-200">{feedback}</p> : null}
             </>
           ) : (
-            <p className="mt-3 text-sm text-stone-400">Select a zone or click on the map to create a prediction.</p>
+            <p className="mt-3 text-sm text-stone-400">Select a zone or click on the map to create an estimate.</p>
           )}
         </div>
 
         <div className="panel rounded-[1.85rem] p-5 md:p-6">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="eyebrow">Extra feature</p>
+              <p className="eyebrow">Watchlist</p>
               <h2 className="section-title mt-2 text-2xl font-bold text-brand-100">Saved watchlist</h2>
             </div>
           </div>

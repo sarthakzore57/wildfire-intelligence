@@ -8,6 +8,19 @@ const tileAttribution =
   import.meta.env.VITE_LEAFLET_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
+const normalizeLongitude = (longitude) => {
+  const normalized = ((Number(longitude) + 180) % 360 + 360) % 360 - 180;
+  return normalized === -180 && Number(longitude) > 0 ? 180 : normalized;
+};
+
+const clampLatitude = (latitude) => Math.max(-90, Math.min(90, Number(latitude)));
+
+const normalizeZone = (zone) => ({
+  ...zone,
+  latitude: clampLatitude(zone.latitude),
+  longitude: normalizeLongitude(zone.longitude),
+});
+
 const riskMarkerIcon = (riskLevel) => {
   const color = riskLevel > 0.7 ? '#df5338' : riskLevel > 0.4 ? '#d99419' : '#29935a';
   return L.divIcon({
@@ -52,9 +65,10 @@ const FireRiskMap = ({ onSelectRegion }) => {
       setLoading(true);
       try {
         const response = await getFireRiskZones({ limit: 100 });
-        setRiskZones(response.data);
+        const normalizedZones = response.data.map(normalizeZone);
+        setRiskZones(normalizedZones);
         if (response.data.length) {
-          const firstZone = response.data[0];
+          const firstZone = normalizedZones[0];
           setMapCenter([firstZone.latitude, firstZone.longitude]);
           setSelectedZone(firstZone);
           onSelectRegion?.(firstZone);
@@ -78,14 +92,15 @@ const FireRiskMap = ({ onSelectRegion }) => {
   };
 
   const handleMapClick = async (event) => {
-    const { lat, lng } = event.latlng;
+    const lat = clampLatitude(event.latlng.lat);
+    const lng = normalizeLongitude(event.latlng.lng);
     setClickedCoords([lat, lng]);
     setError('');
     setLoading(true);
 
     try {
       const response = await predictFireRisk(lat, lng);
-      const nextZone = response.data;
+      const nextZone = normalizeZone(response.data);
       setRiskZones((previous) => {
         const duplicate = previous.some(
           (zone) =>
@@ -97,7 +112,7 @@ const FireRiskMap = ({ onSelectRegion }) => {
       handleSelectZone(nextZone);
     } catch (fetchError) {
       console.error('Error predicting fire risk:', fetchError);
-      setError('Prediction failed for this location. Please try another point.');
+      setError('Risk estimate failed for this location. Please try another point.');
     } finally {
       setLoading(false);
     }
@@ -108,7 +123,7 @@ const FireRiskMap = ({ onSelectRegion }) => {
     setError('');
     try {
       const response = await predictFireSpread(zoneId);
-      setSpreadPoints(response.data.spread_points || []);
+      setSpreadPoints((response.data.spread_points || []).map(normalizeZone));
     } catch (fetchError) {
       console.error('Error predicting fire spread:', fetchError);
       setError('Spread simulation could not be generated.');
@@ -170,7 +185,7 @@ const FireRiskMap = ({ onSelectRegion }) => {
             onClick={() => handlePredictSpread(selectedZone.id)}
             className="primary-button mt-4 w-full"
           >
-            Simulate spread
+            Simulate estimated spread
           </button>
         </div>
       ) : null}
@@ -190,7 +205,7 @@ const FireRiskMap = ({ onSelectRegion }) => {
             <Popup>
               <div className="min-w-[220px] text-[#231911]">
                 <h3 className="text-base font-bold">{zone.region_name}</h3>
-                <p className="mt-2 text-sm">Risk: {(zone.risk_level * 100).toFixed(0)}%</p>
+                <p className="mt-2 text-sm">Estimated risk: {(zone.risk_level * 100).toFixed(0)}%</p>
                 <p className="text-sm">Category: {zone.risk_category}</p>
                 {zone.temperature ? <p className="text-sm">Temperature: {zone.temperature.toFixed(1)} C</p> : null}
                 {zone.humidity ? <p className="text-sm">Humidity: {zone.humidity.toFixed(0)}%</p> : null}
@@ -200,7 +215,7 @@ const FireRiskMap = ({ onSelectRegion }) => {
                   className="mt-3 rounded-full bg-brand-500 px-3 py-2 text-sm font-semibold text-white"
                   onClick={() => handlePredictSpread(zone.id)}
                 >
-                  Predict spread
+                  Simulate spread
                 </button>
               </div>
             </Popup>
@@ -221,9 +236,9 @@ const FireRiskMap = ({ onSelectRegion }) => {
           >
             <Popup>
               <div className="text-[#231911]">
-                <p className="font-semibold">Predicted spread point</p>
+                <p className="font-semibold">Simulated spread point</p>
                 <p className="text-sm">{new Date(point.timestamp).toLocaleString()}</p>
-                <p className="text-sm">Risk {(point.risk_level * 100).toFixed(0)}%</p>
+                <p className="text-sm">Estimated risk {(point.risk_level * 100).toFixed(0)}%</p>
               </div>
             </Popup>
           </CircleMarker>

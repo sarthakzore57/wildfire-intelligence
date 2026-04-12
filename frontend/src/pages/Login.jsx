@@ -58,23 +58,23 @@ const Login = () => {
           <div className="relative z-10">
           <p className="eyebrow">Forest Sentinel Platform</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <span className="auth-badge">Live risk intelligence</span>
-            <span className="auth-badge">Map-first operations</span>
-            <span className="auth-badge">Early warning workflow</span>
+            <span className="auth-badge">Risk estimates</span>
+            <span className="auth-badge">Watchlist</span>
+            <span className="auth-badge">Alerts</span>
           </div>
           <h1 className="section-title mt-4 text-5xl font-bold text-[#fff8ef]">
-            Modern wildfire intelligence, built to feel original and production-ready.
+            Wildfire monitoring for risk, alerts, and watch regions.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-[#fdebd7]">
-            Sign in to monitor risk zones, run spread simulations, manage alert thresholds, and operate the refreshed command center.
+            Sign in to review map estimates, incident history, alerts, and saved regions.
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {[
-              ['Risk map', 'Generate live fire-risk predictions directly from the map.'],
-              ['Incident history', 'Review patterns, severity mix, and historical fire activity.'],
-              ['Alert desk', 'Track unread notifications and operator response flow.'],
-              ['Watchlist', 'Save critical regions and monitor them continuously.'],
+              ['Risk map', 'Create location-based risk estimates from the map.'],
+              ['Incident history', 'Review recorded incidents and severity trends.'],
+              ['Alerts', 'Track unread notifications and review status.'],
+              ['Watchlist', 'Save important regions for quick access.'],
             ].map(([title, copy]) => (
               <div key={title} className="panel-soft rounded-[1.5rem] p-4">
                 <p className="text-lg font-semibold text-[#fff8ef]">{title}</p>
@@ -89,7 +89,7 @@ const Login = () => {
           <p className="eyebrow !text-brand-700">Welcome back</p>
           <h2 className="section-title mt-3 text-4xl font-bold text-[#231911]">Sign in to your account</h2>
           <p className="mt-3 text-sm text-stone-600">
-            Access the latest operational view for fire risk, incidents, alerts, and personal watch settings.
+            Access the latest risk view, incident history, alerts, and watchlist settings.
           </p>
 
           {error ? (

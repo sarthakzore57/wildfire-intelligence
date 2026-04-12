@@ -68,13 +68,13 @@ const Dashboard = () => {
 
   const briefing = useMemo(() => {
     if (!zones.length) {
-      return 'No fire risk zones are loaded yet. Generate a prediction from the map to start monitoring.';
+      return 'No risk zones are loaded yet. Use the map to generate your first estimate.';
     }
 
     const topZone = [...zones].sort((a, b) => b.risk_level - a.risk_level)[0];
     const unreadAlerts = alerts.filter((alert) => !alert.is_read).length;
 
-    return `${topZone.region_name} is currently the highest-risk monitored zone at ${(topZone.risk_level * 100).toFixed(0)}%. You have ${unreadAlerts} unread alerts and ${savedRegions.length} saved watch regions.`;
+    return `${topZone.region_name} is the highest-risk monitored zone at ${(topZone.risk_level * 100).toFixed(0)}%. You have ${unreadAlerts} unread alerts and ${savedRegions.length} saved regions.`;
   }, [alerts, savedRegions.length, zones]);
 
   const recentHighRiskZones = useMemo(
@@ -87,7 +87,7 @@ const Dashboard = () => {
       <div className="panel rounded-[2rem] p-8">
         <p className="eyebrow">Loading</p>
         <h2 className="section-title mt-2 text-3xl font-bold text-brand-100">Building the command center</h2>
-        <p className="mt-3 text-stone-300">Pulling alerts, incidents, historical context, and watchlist state.</p>
+        <p className="mt-3 text-stone-300">Loading alerts, incidents, and watchlist state.</p>
       </div>
     );
   }
@@ -107,7 +107,7 @@ const Dashboard = () => {
           <div>
             <p className="eyebrow">Live wildfire intelligence</p>
             <h2 className="section-title mt-3 max-w-3xl text-4xl font-bold text-brand-50 md:text-5xl">
-              Monitor risk, guide response, and turn raw fire data into operator-ready action.
+              Monitor risk, incidents, and alerts from one operational view.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-7 text-stone-200">
               {briefing}
@@ -126,12 +126,12 @@ const Dashboard = () => {
             <div className="metric-card">
               <p className="eyebrow !text-[0.64rem]">Average risk</p>
               <p className="mt-4 text-4xl font-bold text-brand-50">{(stats.averageRisk * 100).toFixed(0)}%</p>
-              <p className="mt-3 text-sm text-stone-300">Cross-zone mean risk from the current monitored set.</p>
+              <p className="mt-3 text-sm text-stone-300">Average estimated risk across loaded zones.</p>
             </div>
             <div className="metric-card">
               <p className="eyebrow !text-[0.64rem]">Watch coverage</p>
               <p className="mt-4 text-4xl font-bold text-brand-50">{savedRegions.length}</p>
-              <p className="mt-3 text-sm text-stone-300">Saved regions ready for quick revisit and threshold tuning.</p>
+              <p className="mt-3 text-sm text-stone-300">Saved regions available for quick revisit.</p>
             </div>
           </div>
         </div>
@@ -187,7 +187,7 @@ const Dashboard = () => {
           <div className="mt-5 space-y-3">
             {recentHighRiskZones.length === 0 ? (
               <div className="panel-soft rounded-[1.5rem] p-4 text-sm text-stone-300">
-                No elevated zones yet. Use the map to generate fresh predictions and populate this board.
+                No elevated zones yet. Use the map to generate fresh estimates.
               </div>
             ) : (
               recentHighRiskZones.map((zone) => (
@@ -215,7 +215,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div>
           <div className="panel rounded-[1.85rem] p-5 md:p-6">
             <p className="eyebrow">Unread feed</p>
             <h3 className="section-title mt-2 text-2xl font-bold text-brand-100">Recent alerts</h3>
@@ -234,23 +234,6 @@ const Dashboard = () => {
                 </div>
               ))}
               {!alerts.length && <p className="text-sm text-stone-400">No alert activity yet.</p>}
-            </div>
-          </div>
-
-          <div className="panel rounded-[1.85rem] p-5 md:p-6">
-            <p className="eyebrow">Operator extras</p>
-            <h3 className="section-title mt-2 text-2xl font-bold text-brand-100">Added value in this refresh</h3>
-            <div className="mt-5 grid gap-3">
-              {[
-                'Modern command-center shell and original UI language',
-                'Persistent watchlist support wired to saved regions',
-                'Stronger session restore by validating the current user on load',
-                'Cleaner map flow for on-demand risk prediction and spread simulation',
-              ].map((item) => (
-                <div key={item} className="panel-soft rounded-[1.25rem] px-4 py-3 text-sm text-stone-200">
-                  {item}
-                </div>
-              ))}
             </div>
           </div>
         </div>
