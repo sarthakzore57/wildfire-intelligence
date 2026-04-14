@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getCurrentUser, login } from '../services/api';
+import { defaultApiBaseUrl, getCurrentUser, login } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ const Login = () => {
       } else if (requestError.response?.status === 401) {
         setError('Login succeeded, but loading the profile failed. Please try again.');
       } else if (!requestError.response) {
-        setError('Backend is not reachable on http://localhost:8000.');
+        setError(`Backend is not reachable at ${defaultApiBaseUrl}.`);
       } else {
         setError('Something went wrong. Please try again later.');
       }

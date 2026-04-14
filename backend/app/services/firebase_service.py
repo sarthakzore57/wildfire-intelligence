@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import base64
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -16,6 +17,31 @@ firebase_initialized = False
 firebase_db = None
 firestore_db = None
 
+
+def _normalize_credentials_payload(payload: dict) -> dict:
+    normalized = dict(payload)
+    private_key = normalized.get("private_key")
+    if isinstance(private_key, str):
+        normalized["private_key"] = private_key.replace("\\n", "\n")
+    return normalized
+
+
+def _load_credentials_from_env() -> credentials.Certificate | None:
+    raw_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if raw_json:
+        payload = _normalize_credentials_payload(json.loads(raw_json))
+        _validate_credentials_payload(payload, source="FIREBASE_SERVICE_ACCOUNT_JSON")
+        return credentials.Certificate(payload)
+
+    raw_b64 = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON_BASE64")
+    if raw_b64:
+        decoded = base64.b64decode(raw_b64).decode("utf-8")
+        payload = _normalize_credentials_payload(json.loads(decoded))
+        _validate_credentials_payload(payload, source="FIREBASE_SERVICE_ACCOUNT_JSON_BASE64")
+        return credentials.Certificate(payload)
+
+    return None
+
 def init_firebase():
     """Initialize Firebase with credentials from environment or config file"""
     global firebase_initialized, firebase_db, firestore_db
@@ -25,8 +51,11 @@ def init_firebase():
     
     try:
         # Check for Firebase credentials
+        env_cred = _load_credentials_from_env()
         cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH") or settings.FIREBASE_CREDENTIALS_PATH
-        if cred_path and Path(cred_path).exists():
+        if env_cred is not None:
+            cred = env_cred
+        elif cred_path and Path(cred_path).exists():
             _validate_credentials_file(Path(cred_path))
             cred = credentials.Certificate(cred_path)
         else:
@@ -93,23 +122,27 @@ def _validate_credentials_file(path: Path) -> None:
     with open(path, "r", encoding="utf-8") as f:
         payload = json.load(f)
 
+    _validate_credentials_payload(payload, source=str(path))
+
+
+def _validate_credentials_payload(payload: dict, source: str) -> None:
     private_key = payload.get("private_key", "")
     client_email = payload.get("client_email", "")
 
     if "YOUR_PRIVATE_KEY_HERE" in private_key or "your-private-key" in private_key.lower():
         raise ValueError(
-            f"Firebase credentials file at {path} still contains a placeholder private key. "
+            f"Firebase credentials from {source} still contain a placeholder private key. "
             "Download a real service-account JSON from Firebase/Google Cloud and replace this file."
         )
 
     if not private_key.startswith("-----BEGIN PRIVATE KEY-----"):
         raise ValueError(
-            f"Firebase credentials file at {path} does not contain a valid service-account private key."
+            f"Firebase credentials from {source} do not contain a valid service-account private key."
         )
 
     if not client_email or "firebase-adminsdk" not in client_email:
         raise ValueError(
-            f"Firebase credentials file at {path} does not look like a Firebase Admin SDK service account."
+            f"Firebase credentials from {source} do not look like a Firebase Admin SDK service account."
         )
 
 

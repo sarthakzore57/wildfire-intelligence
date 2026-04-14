@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const defaultApiBaseUrl = (() => {
+export const defaultApiBaseUrl = (() => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }

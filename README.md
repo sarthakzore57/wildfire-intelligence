@@ -130,6 +130,11 @@ If you deploy this repository to Vercel, set the project Root Directory to the r
 - `frontend`
 - `backend`
 
+For the backend service, provide Firebase credentials through a Vercel environment variable instead of relying on a local file path. The backend now supports either:
+
+- `FIREBASE_SERVICE_ACCOUNT_JSON` with the full Firebase service-account JSON as a single string
+- `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64` with the same JSON base64-encoded
+
 ### Backend Setup
 1. Clone the repository
 2. Navigate to the backend directory: `cd backend`
