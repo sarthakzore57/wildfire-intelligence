@@ -123,6 +123,13 @@ Open:
 - Frontend: `http://localhost:5173`
 - Backend docs: `http://localhost:8000/docs`
 
+### Vercel Deployment
+
+If you deploy this repository to Vercel, set the project Root Directory to the repository root, not `frontend`. The monorepo service configuration lives in [vercel.json](/e:/project/forest-fire-prediction-main/vercel.json) and expects these paths from the top level:
+
+- `frontend`
+- `backend`
+
 ### Backend Setup
 1. Clone the repository
 2. Navigate to the backend directory: `cd backend`
